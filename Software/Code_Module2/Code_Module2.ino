@@ -9,16 +9,17 @@
 Servo servoMain;
 
 //RijINTs aanmaken
-int LinksVooruit =11;
-int LinksAchteruit = 12;
-int RechtsVooruit = 5;
-int RechtsAchteruit = 6;
-int EnableRechts = 4;
-int EnableLinks = 13;
+int LinksVooruit =1;
+int LinksAchteruit = 2;
+int RechtsVooruit = 4;
+int RechtsAchteruit = 5;
+int EnableRechts = 3;
+int EnableLinks = 0;
 
 int ProgramCount = 1;
 int DriveCount = 0;
-int Status = 1;
+int ServoStatus = 20;
+
 
 //Sonarints aanmaken
 unsigned long pingTimer[SONAR_NUM]; // When each pings.
@@ -71,7 +72,7 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   
-  /*MeasureDistance(500);
+  MeasureDistance(500);
   Serial.print("LeftSensor is ");
   Serial.println(LeftSensor);
   Serial.print("FrontSensor is ");
@@ -80,7 +81,7 @@ void loop() {
   Serial.println(RightSensor);
   Serial.println(" ");
   
-  DistanceCheck(500);*/
+  DistanceCheck(500);
   Execute();
 }
 
@@ -101,7 +102,7 @@ void MeasureDistance(int DelayVal){
 }
 
 void DistanceCheck(int DelayVal){
-  if(FrontSensor <= 15 || LeftSensor <= 19 || RightSensor <= 19){
+  if(FrontSensor <= 15 && FrontSensor != 0){
     if (ProgramCount < 4){
       ProgramCount++;
     }
@@ -130,9 +131,9 @@ void oneSensorCycle() { // Do something with the results.
 
     switch (i){
       case 0:
-      FrontSensor = cm[i];
-      Serial.print("FrontSensor is ");
-      Serial.println(FrontSensor);
+      RightSensor = cm[i];
+      Serial.print("RightSensor is ");
+      Serial.println(RightSensor);
       break;
       case 1:
       LeftSensor = cm[i];
@@ -140,14 +141,11 @@ void oneSensorCycle() { // Do something with the results.
       Serial.println(LeftSensor);
       break;
       case 2:
-      RightSensor = cm[i];
-      Serial.print("RightSensor is ");
-      Serial.println(RightSensor);
+      FrontSensor = cm[i];
+      Serial.print("FrontSensor is ");
+      Serial.println(FrontSensor);
       break;
     }
-    /*cm[0]= FrontSensor;
-    cm[1] = LeftSensor;
-    cm[2] = RightSensor;*/
   }
   Serial.println();
 }
@@ -157,49 +155,42 @@ void Execute(){
     case 1:
       Serial.println("Volle Lijn");
       DriveCount = 0;
-      //servoStatus(1);
+      servoMain.write(20);
       Vooruit();
       MeasureDistance(500);
       DistanceCheck(500);
       break;
     case 2:
       Serial.println("Stippellijn");
-      //servoStatus(2);
       Vooruit();
       MeasureDistance(500);
       DistanceCheck(500);
+      servoStatus();
       break;
     case 3:
       Serial.println("Zigzaglijn");
       DriveZigzag();
-      //servoStatus(1);
+      servoMain.write(20);
       break;
     case 4:
       Serial.println("Gestipte ZigZagLijn");
       DriveCount = 0;
       DriveZigzag();
-      //servoStatus(2);
+      servoStatus();
       break;
   }
 }
 
-/* Not Needed for first Test
- * void servoStatus(int Status){
-  switch(Status){
-    case 1:
-      servoMain.write(180);
-      break;
-    case 2:
-      //while(Status == 2){
-      servoMain.write(90);
-      Serial.println("servo UP");
-      //delay(5000);
-      servoMain.write(180);
-      Serial.println("servo down");
-      //delay(5000);
-      //}   
-  }
-}*/
+  void servoStatus(){
+    if(ServoStatus == 20){
+      servoMain.write(80);
+      ServoStatus = 80;
+    }   
+    else {
+      servoMain.write(20);
+      ServoStatus = 20;
+    }
+}
 
 void Drive(int LeftWheel, int RightWheel)
 {
@@ -247,10 +238,6 @@ void Drive(int LeftWheel, int RightWheel)
  }
 }
 
-/*void CheckSchakelaar()
-{
-}*/
-
 void Vooruit()
 {
   Drive(1,1);
@@ -273,33 +260,36 @@ void DraaiLinks(int delayVal)
 void DriveZigzag(){
   if (DriveCount < 1){
   do { 
-  Drive (1,-1);
+  Drive (1,0);
   delay(250);
   Vooruit();
+  servoMain.write(20);
   delay(1000);
-  Drive (-1,1);
+  Drive (0,1);
   delay(750);
   Vooruit();
+  servoMain.write(80);
   delay(1000);
   DriveCount++;
   MeasureDistance(500);
   DistanceCheck(500);
-  } while(ProgramCount == 3 || ProgramCount == 4);
+  } while(ProgramCount == 3);
   }
   else {
     do{ 
-    Drive (1,-1);
+    Drive (1,0);
     delay(750);
     Vooruit();
     delay(2000);
-    Drive (-1,1);
+    Drive (0,1);
     delay(750);
     Vooruit();
+    servoMain.write(80);
     delay(2000);
     DriveCount++;
     MeasureDistance(500);
     DistanceCheck(500);
-    } while( ProgramCount == 3 || ProgramCount == 4);
+    } while(ProgramCount == 4);
   }
 }
 void Stop(int delayVal)
